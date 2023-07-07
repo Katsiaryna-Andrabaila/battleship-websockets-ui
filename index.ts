@@ -38,6 +38,10 @@ wss.on('connection', (ws, req) => {
         break;
       }
       case INCOMING_TYPES.addUser: {
+        //const {indexRoom} = JSON.parse(incomingData);
+        const roomData = JSON.stringify({ idGame: 0, idPlayer: 0 });
+        ws.send(JSON.stringify({ type: INCOMING_TYPES.createGame, data: roomData, id }));
+        break;
       }
     }
   });
