@@ -1,6 +1,7 @@
 import { httpServer } from './src/http_server';
 import { WebSocketServer } from 'ws';
 import { INCOMING_TYPES } from './src/constants';
+import { db } from './src/db';
 
 const HTTP_PORT = 8181;
 
@@ -15,17 +16,28 @@ wss.on('connection', (ws, req) => {
 
   ws.on('message', (message) => {
     console.log('received: %s', message);
+
+    const { users, rooms, ships, winners } = db;
+
     const jsonMessage = JSON.parse(message.toString());
     const { data: incomingData, id } = jsonMessage;
     switch (jsonMessage.type) {
       case INCOMING_TYPES.reg: {
         const { name } = JSON.parse(incomingData);
-        const userData = JSON.stringify({ name, index: 1, error: false, errorMessage: '' });
+        const index = Object.keys(db).length;
+        db.users[index] = JSON.parse(incomingData);
+        const userData = JSON.stringify({ name, index, error: false, errorMessage: '' });
         ws.send(JSON.stringify({ type: INCOMING_TYPES.reg, data: userData, id }));
         break;
       }
       case INCOMING_TYPES.createRoom: {
-        ws.on('upgrade', (req) => {});
+        const roomUser = { name: '', index: 0 };
+        rooms.push({ roomId: rooms.length, roomUsers: [roomUser] });
+        const updateData = JSON.stringify(rooms);
+        ws.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+        break;
+      }
+      case INCOMING_TYPES.addUser: {
       }
     }
   });

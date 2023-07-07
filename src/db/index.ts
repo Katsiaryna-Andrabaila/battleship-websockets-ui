@@ -1,3 +1,8 @@
-import { Users } from '../types';
+import { DB } from '../types';
 
-export const db: Users = {};
+export const db: DB = {
+  users: {},
+  rooms: [],
+  ships: [],
+  winners: [],
+};
