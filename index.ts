@@ -43,6 +43,13 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type: INCOMING_TYPES.createGame, data: roomData, id }));
         break;
       }
+      case INCOMING_TYPES.addShips: {
+        const { ships, indexPlayer } = JSON.parse(incomingData);
+        db.ships = ships;
+        const gameData = JSON.stringify({ ships: db.ships, currentPlayerIndex: indexPlayer });
+        ws.send(JSON.stringify({ type: INCOMING_TYPES.startGame, data: gameData, id }));
+        break;
+      }
     }
   });
 });
