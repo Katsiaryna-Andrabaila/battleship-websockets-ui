@@ -2,6 +2,7 @@ import { httpServer } from './src/http_server';
 import { WebSocketServer } from 'ws';
 import { INCOMING_TYPES } from './src/constants';
 import { db } from './src/db';
+import { getAttackStatus } from './src/utils';
 
 const HTTP_PORT = 8181;
 
@@ -48,6 +49,13 @@ wss.on('connection', (ws, req) => {
         db.ships = ships;
         const gameData = JSON.stringify({ ships: db.ships, currentPlayerIndex: indexPlayer });
         ws.send(JSON.stringify({ type: INCOMING_TYPES.startGame, data: gameData, id }));
+        break;
+      }
+      case INCOMING_TYPES.attack: {
+        const { gameId, x, y, indexPlayer } = JSON.parse(incomingData);
+        const attackStatus = getAttackStatus(x, y);
+        const attackData = JSON.stringify({ position: { x, y }, currentPlayer: indexPlayer, status: attackStatus });
+        ws.send(JSON.stringify({ type: INCOMING_TYPES.attack, data: attackData, id }));
         break;
       }
     }
