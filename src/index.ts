@@ -20,17 +20,31 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (message) => {
     console.log('received: %s', message);
 
-    const { users, rooms, ships, winners } = db;
+    const { users, rooms, winners } = db;
 
     const jsonMessage = JSON.parse(message.toString());
     const { type, data: incomingData, id } = jsonMessage;
     switch (type) {
       case INCOMING_TYPES.reg: {
         const { name } = JSON.parse(incomingData);
+        incomingData.socket = ws;
         const index = Object.keys(db).length;
-        db.users[index] = JSON.parse(incomingData);
+        users[index] = JSON.parse(incomingData);
         const userData = JSON.stringify({ name, index, error: false, errorMessage: '' });
         ws.send(JSON.stringify({ type: INCOMING_TYPES.reg, data: userData, id }));
+
+        rooms.length &&
+          wss.clients.forEach((client) => {
+            const updateData = JSON.stringify(rooms);
+            client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+          });
+
+        winners.length &&
+          wss.clients.forEach((client) => {
+            const updateData = JSON.stringify(winners);
+            client.send(JSON.stringify({ type: INCOMING_TYPES.updateWinners, data: updateData, id }));
+          });
+
         break;
       }
       case INCOMING_TYPES.createRoom: {

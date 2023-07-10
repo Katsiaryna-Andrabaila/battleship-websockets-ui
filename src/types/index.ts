@@ -1,4 +1,7 @@
+import { WebSocket } from 'ws';
+
 export type User = {
+  socket: WebSocket;
   login: string;
   password: string;
 };
