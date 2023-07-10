@@ -12,6 +12,6 @@
     "sourceMap": true,
     "outDir": "build"
   },
-  "files": ["index.ts"],
+  "files": ["src/index.ts"],
   "lib": ["es2022"]
 }

@@ -4,8 +4,8 @@
   "description": "WebSocket remote control task",
   "main": "index.ts",
   "scripts": {
-    "start": "node ./index.ts",
-    "start:dev": "nodemon ./index.ts",
+    "start": "node src/index.ts",
+    "start:dev": "nodemon src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Katsiaryna Andrabaila",

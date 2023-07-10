@@ -1,12 +1,14 @@
-import { httpServer } from './src/http_server';
+import { httpServer } from './http_server';
 import { WebSocketServer } from 'ws';
-import { INCOMING_TYPES } from './src/constants';
-import { db } from './src/db';
-import { getAttackStatus } from './src/utils';
+import { INCOMING_TYPES } from './constants';
+import { db } from './db';
+import { getAttackStatus } from './utils';
 
 const HTTP_PORT = 8181;
 
-const wss = new WebSocketServer({ port: 3000 });
+const wss = new WebSocketServer({ port: 3000 }, () => {
+  console.log('WebSocket Server started on port 3000');
+});
 
 wss.on('connection', (ws, req) => {
   ws.on('error', console.error);
@@ -21,8 +23,8 @@ wss.on('connection', (ws, req) => {
     const { users, rooms, ships, winners } = db;
 
     const jsonMessage = JSON.parse(message.toString());
-    const { data: incomingData, id } = jsonMessage;
-    switch (jsonMessage.type) {
+    const { type, data: incomingData, id } = jsonMessage;
+    switch (type) {
       case INCOMING_TYPES.reg: {
         const { name } = JSON.parse(incomingData);
         const index = Object.keys(db).length;
