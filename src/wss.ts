@@ -24,6 +24,7 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
 
     const jsonMessage = JSON.parse(message.toString());
     const { type, data: incomingData, id } = jsonMessage;
+
     switch (type) {
       case INCOMING_TYPES.reg: {
         const userParsedData = JSON.parse(incomingData);
@@ -61,10 +62,23 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         break;
       }
       case INCOMING_TYPES.createRoom: {
-        const roomUser = { name: '', index: 0 };
-        rooms.push({ roomId: rooms.length, roomUsers: [roomUser] });
+        const usersEntries = Object.entries(users);
+        const roomUser = usersEntries.find((user) => user[1].socket === ws);
+
+        rooms.push({
+          roomId: rooms.length,
+          roomUsers: [{ name: roomUser![1].name, index: Number(roomUser![0]) }],
+        });
+
         const updateData = JSON.stringify(rooms);
         ws.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+
+        rooms.length &&
+          wss.clients.forEach((client) => {
+            const updateData = JSON.stringify(rooms);
+            client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+          });
+
         break;
       }
       case INCOMING_TYPES.addUser: {
