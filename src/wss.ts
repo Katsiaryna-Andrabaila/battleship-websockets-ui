@@ -73,11 +73,10 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         const updateData = JSON.stringify(rooms);
         ws.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
 
-        rooms.length &&
-          wss.clients.forEach((client) => {
-            const updateData = JSON.stringify(rooms);
-            client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
-          });
+        wss.clients.forEach((client) => {
+          const updateData = JSON.stringify(rooms);
+          client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+        });
 
         break;
       }
