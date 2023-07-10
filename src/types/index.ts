@@ -2,7 +2,7 @@ import { WebSocket } from 'ws';
 
 export type User = {
   socket: WebSocket;
-  login: string;
+  name: string;
   password: string;
 };
 

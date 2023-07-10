@@ -1,4 +1,5 @@
 import { db } from '../db';
+import { User } from '../types';
 
 export const getAttackStatus = (column: number, raw: number) => {
   const ships = db.ships;
@@ -25,4 +26,12 @@ export const getAttackStatus = (column: number, raw: number) => {
   } else {
     return 'miss';
   }
+};
+
+export const validateUser = (name: string, password: string) => {
+  return name.length >= 5 && password.length >= 5;
+};
+
+export const hasUser = (name: string, password: string) => {
+  return Object.values(db.users).some((user: User) => user.name === name && user.password === password);
 };

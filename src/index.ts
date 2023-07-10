@@ -2,7 +2,7 @@ import { httpServer } from './http_server';
 import { WebSocketServer } from 'ws';
 import { INCOMING_TYPES } from './constants';
 import { db } from './db';
-import { getAttackStatus } from './utils';
+import { getAttackStatus, hasUser, validateUser } from './utils';
 
 const HTTP_PORT = 8181;
 
@@ -26,11 +26,24 @@ wss.on('connection', (ws, req) => {
     const { type, data: incomingData, id } = jsonMessage;
     switch (type) {
       case INCOMING_TYPES.reg: {
-        const { name } = JSON.parse(incomingData);
-        incomingData.socket = ws;
-        const index = Object.keys(db).length;
-        users[index] = JSON.parse(incomingData);
-        const userData = JSON.stringify({ name, index, error: false, errorMessage: '' });
+        const userParsedData = JSON.parse(incomingData);
+        const { name, password } = userParsedData;
+        userParsedData.socket = ws;
+
+        const isValid = validateUser(name, password);
+
+        const hasDbUser = hasUser(name, password);
+
+        if (isValid && !hasDbUser) {
+          users[Object.keys(users).length] = userParsedData;
+        }
+
+        const userData = JSON.stringify({
+          name,
+          index: isValid && !hasDbUser ? Object.keys(users).length : 0,
+          error: !isValid || hasDbUser,
+          errorMessage: !isValid ? 'invalid password or name' : hasDbUser ? 'user already exists' : '',
+        });
         ws.send(JSON.stringify({ type: INCOMING_TYPES.reg, data: userData, id }));
 
         rooms.length &&
