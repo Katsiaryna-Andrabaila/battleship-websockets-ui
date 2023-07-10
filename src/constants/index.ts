@@ -12,3 +12,5 @@ export const INCOMING_TYPES = {
   turn: 'turn',
   finish: 'finish',
 };
+
+export const PING_INTERVAL = 30000;

@@ -1,5 +1,9 @@
 import { WebSocket } from 'ws';
 
+export interface ExtendedWebSocket extends WebSocket {
+  isAlive: boolean;
+}
+
 export type User = {
   socket: WebSocket;
   name: string;

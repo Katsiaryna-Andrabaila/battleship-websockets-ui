@@ -1,8 +1,9 @@
 import { httpServer } from './http_server';
 import { WebSocketServer } from 'ws';
-import { INCOMING_TYPES } from './constants';
+import { INCOMING_TYPES, PING_INTERVAL } from './constants';
 import { db } from './db';
 import { getAttackStatus, hasUser, validateUser } from './utils';
+import { ExtendedWebSocket } from './types';
 
 const HTTP_PORT = 8181;
 
@@ -10,7 +11,8 @@ const wss = new WebSocketServer({ port: 3000 }, () => {
   console.log('WebSocket Server started on port 3000');
 });
 
-wss.on('connection', (ws, req) => {
+wss.on('connection', (ws: ExtendedWebSocket, req) => {
+  ws.isAlive = true;
   ws.on('error', console.error);
 
   ws.send(JSON.stringify(httpServer.address()));
@@ -89,7 +91,24 @@ wss.on('connection', (ws, req) => {
       }
     }
   });
+
+  ws.on('pong', () => {
+    (this as unknown as ExtendedWebSocket).isAlive = true;
+  });
 });
+
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if ((ws as unknown as ExtendedWebSocket).isAlive === false) {
+      return ws.terminate();
+    }
+
+    (ws as unknown as ExtendedWebSocket).isAlive = false;
+    ws.ping();
+  });
+}, PING_INTERVAL);
+
+wss.on('close', () => clearInterval(interval));
 
 console.log(`Start static http server on the ${HTTP_PORT} port!`);
 httpServer.listen(HTTP_PORT);
