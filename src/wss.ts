@@ -20,10 +20,12 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
   ws.on('message', (message) => {
     console.log('received: %s', message);
 
-    const { users, rooms, winners } = db;
+    const { users, rooms, games, winners } = db;
 
     const jsonMessage = JSON.parse(message.toString());
     const { type, data: incomingData, id } = jsonMessage;
+
+    const usersEntries = Object.entries(users);
 
     switch (type) {
       case INCOMING_TYPES.reg: {
@@ -62,7 +64,6 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         break;
       }
       case INCOMING_TYPES.createRoom: {
-        const usersEntries = Object.entries(users);
         const roomUser = usersEntries.find((user) => user[1].socket === ws);
 
         rooms.push({
@@ -81,9 +82,31 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         break;
       }
       case INCOMING_TYPES.addUser: {
-        //const {indexRoom} = JSON.parse(incomingData);
-        const roomData = JSON.stringify({ idGame: 0, idPlayer: 0 });
-        ws.send(JSON.stringify({ type: INCOMING_TYPES.createGame, data: roomData, id }));
+        const { indexRoom } = JSON.parse(incomingData);
+        const newRoomUser = usersEntries.find((user) => user[1].socket === ws);
+
+        const targetRoom = rooms.find((room) => room.roomId === indexRoom);
+        if (newRoomUser![1].socket !== ws) {
+          targetRoom?.roomUsers.push({ name: newRoomUser![1].name, index: Number(newRoomUser![0]) });
+        }
+
+        wss.clients.forEach((client) => {
+          const updateData = JSON.stringify(rooms);
+          client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+        });
+
+        const newGame = { idGame: games.length, idPlayer: 0 };
+        games.push(newGame);
+
+        const roomData = JSON.stringify(newGame);
+        wss.clients.forEach((client) => {
+          usersEntries.forEach((user) => {
+            if (client === user[1].socket) {
+              client.send(JSON.stringify({ type: INCOMING_TYPES.createGame, data: roomData, id }));
+            }
+          });
+        });
+
         break;
       }
       case INCOMING_TYPES.addShips: {

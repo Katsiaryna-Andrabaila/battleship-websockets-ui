@@ -39,9 +39,15 @@ export type Winner = {
   wins: number;
 };
 
+export type Game = {
+  idGame: number;
+  idPlayer: number;
+};
+
 export type DB = {
   users: Users;
   rooms: Room[];
+  games: Game[];
   ships: Ship[];
   winners: Winner[];
 };
