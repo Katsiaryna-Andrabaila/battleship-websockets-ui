@@ -72,9 +72,6 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
           roomUsers: [{ name: roomUser![1].name, index: Number(roomUser![0]) }],
         });
 
-        //const updateData = JSON.stringify(rooms);
-        //ws.send(JSON.stringify({ type: COMMAND_TYPES.updateRoom, data: updateData, id }));
-
         const availableRooms = rooms.filter((room) => room.roomUsers.length < 2);
         const updateRoomsData = JSON.stringify(availableRooms);
         wss.clients.forEach((client) => {

@@ -1,9 +1,11 @@
 import { db } from '../db';
 import { User } from '../types';
 
+const cells = 10;
+
 export const getAttackStatus = (column: number, raw: number) => {
   const ships = db.ships;
-  const cells = 10;
+
   const empty = 0;
   const filled = 1;
   const matrix = new Array(cells * cells).fill(empty);
@@ -34,4 +36,11 @@ export const validateUser = (name: string, password: string) => {
 
 export const hasUser = (name: string, password: string) => {
   return Object.values(db.users).some((user: User) => user.name === name && user.password === password);
+};
+
+export const getRandomCell = () => {
+  const randomX = Math.floor(Math.random() * 10);
+  const randomY = Math.floor(Math.random() * 10);
+
+  return { x: randomX, y: randomY };
 };
