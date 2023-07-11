@@ -1,11 +1,9 @@
 import { db } from '../db';
-import { User } from '../types';
+import { Ship, User } from '../types';
 
 const cells = 10;
 
-export const getAttackStatus = (column: number, raw: number) => {
-  const ships = db.ships;
-
+export const getAttackStatus = (ships: Ship[], column: number, raw: number) => {
   const empty = 0;
   const filled = 1;
   const matrix = new Array(cells * cells).fill(empty);

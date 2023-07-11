@@ -117,15 +117,22 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         break;
       }
       case COMMAND_TYPES.addShips: {
-        const { ships, indexPlayer } = JSON.parse(incomingData);
-        db.ships = ships;
-        const gameData = JSON.stringify({ ships: db.ships, currentPlayerIndex: indexPlayer });
+        const { gameId, ships, indexPlayer } = JSON.parse(incomingData);
+        const targetGameShips = db.gameShips.find((el) => el.idGame === gameId);
+        if (indexPlayer === 0) {
+          targetGameShips ? (targetGameShips[0] = ships) : db.gameShips.push({ idGame: gameId, 0: ships, 1: [] });
+        } else {
+          targetGameShips ? (targetGameShips[1] = ships) : db.gameShips.push({ idGame: gameId, 0: [], 1: ships });
+        }
+
+        const gameData = JSON.stringify({ ships, currentPlayerIndex: indexPlayer });
         ws.send(JSON.stringify({ type: COMMAND_TYPES.startGame, data: gameData, id }));
         break;
       }
       case COMMAND_TYPES.attack: {
         const { gameId, x, y, indexPlayer } = JSON.parse(incomingData);
-        const attackStatus = getAttackStatus(x, y);
+        const ships = db.gameShips.find((el) => el.idGame === gameId);
+        const attackStatus = getAttackStatus(indexPlayer === 0 ? ships![0] : ships![1], x, y);
         const attackData = JSON.stringify({ position: { x, y }, currentPlayer: indexPlayer, status: attackStatus });
         ws.send(JSON.stringify({ type: COMMAND_TYPES.attack, data: attackData, id }));
         break;

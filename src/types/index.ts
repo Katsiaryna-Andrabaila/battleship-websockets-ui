@@ -44,10 +44,16 @@ export type Game = {
   idPlayer: number;
 };
 
+export type GameShips = {
+  idGame: number;
+  0: Ship[];
+  1: Ship[];
+};
+
 export type DB = {
   users: Users;
   rooms: Room[];
   games: Game[];
-  ships: Ship[];
+  gameShips: GameShips[];
   winners: Winner[];
 };
