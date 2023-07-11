@@ -51,7 +51,8 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
 
         rooms.length &&
           wss.clients.forEach((client) => {
-            const updateData = JSON.stringify(rooms);
+            const availableRooms = rooms.filter((room) => room.roomUsers.length < 2);
+            const updateData = JSON.stringify(availableRooms);
             client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
           });
 
@@ -75,7 +76,8 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         ws.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
 
         wss.clients.forEach((client) => {
-          const updateData = JSON.stringify(rooms);
+          const availableRooms = rooms.filter((room) => room.roomUsers.length < 2);
+          const updateData = JSON.stringify(availableRooms);
           client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
         });
 
