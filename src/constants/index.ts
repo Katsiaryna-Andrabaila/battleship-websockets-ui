@@ -1,4 +1,4 @@
-export const INCOMING_TYPES = {
+export const COMMAND_TYPES = {
   reg: 'reg',
   updateWinners: 'update_winners',
   createRoom: 'create_room',

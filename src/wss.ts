@@ -1,5 +1,5 @@
 import { WebSocketServer } from 'ws';
-import { INCOMING_TYPES, PING_INTERVAL } from './constants';
+import { COMMAND_TYPES, PING_INTERVAL } from './constants';
 import { db } from './db';
 import { getAttackStatus, hasUser, validateUser } from './utils';
 import { ExtendedWebSocket } from './types';
@@ -28,7 +28,7 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
     const usersEntries = Object.entries(users);
 
     switch (type) {
-      case INCOMING_TYPES.reg: {
+      case COMMAND_TYPES.reg: {
         const userParsedData = JSON.parse(incomingData);
         const { name, password } = userParsedData;
         userParsedData.socket = ws;
@@ -47,24 +47,24 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
           error: !isValid || hasDbUser,
           errorMessage: !isValid ? 'invalid password or name' : hasDbUser ? 'user already exists' : '',
         });
-        ws.send(JSON.stringify({ type: INCOMING_TYPES.reg, data: userData, id }));
+        ws.send(JSON.stringify({ type: COMMAND_TYPES.reg, data: userData, id }));
 
         rooms.length &&
           wss.clients.forEach((client) => {
             const availableRooms = rooms.filter((room) => room.roomUsers.length < 2);
             const updateData = JSON.stringify(availableRooms);
-            client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+            client.send(JSON.stringify({ type: COMMAND_TYPES.updateRoom, data: updateData, id }));
           });
 
         winners.length &&
           wss.clients.forEach((client) => {
             const updateData = JSON.stringify(winners);
-            client.send(JSON.stringify({ type: INCOMING_TYPES.updateWinners, data: updateData, id }));
+            client.send(JSON.stringify({ type: COMMAND_TYPES.updateWinners, data: updateData, id }));
           });
 
         break;
       }
-      case INCOMING_TYPES.createRoom: {
+      case COMMAND_TYPES.createRoom: {
         const roomUser = usersEntries.find((user) => user[1].socket === ws);
 
         rooms.push({
@@ -72,57 +72,65 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
           roomUsers: [{ name: roomUser![1].name, index: Number(roomUser![0]) }],
         });
 
-        const updateData = JSON.stringify(rooms);
-        ws.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+        //const updateData = JSON.stringify(rooms);
+        //ws.send(JSON.stringify({ type: COMMAND_TYPES.updateRoom, data: updateData, id }));
 
+        const availableRooms = rooms.filter((room) => room.roomUsers.length < 2);
+        const updateRoomsData = JSON.stringify(availableRooms);
         wss.clients.forEach((client) => {
-          const availableRooms = rooms.filter((room) => room.roomUsers.length < 2);
-          const updateData = JSON.stringify(availableRooms);
-          client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+          client.send(JSON.stringify({ type: COMMAND_TYPES.updateRoom, data: updateRoomsData, id }));
         });
 
         break;
       }
-      case INCOMING_TYPES.addUser: {
+      case COMMAND_TYPES.addUser: {
         const { indexRoom } = JSON.parse(incomingData);
         const newRoomUser = usersEntries.find((user) => user[1].socket === ws);
 
         const targetRoom = rooms.find((room) => room.roomId === indexRoom);
-        if (newRoomUser![1].socket !== ws) {
-          targetRoom?.roomUsers.push({ name: newRoomUser![1].name, index: Number(newRoomUser![0]) });
-        }
+
+        targetRoom?.roomUsers.push({
+          name: newRoomUser![1].name,
+          index: Number(newRoomUser![0]),
+        });
 
         wss.clients.forEach((client) => {
           const updateData = JSON.stringify(rooms);
-          client.send(JSON.stringify({ type: INCOMING_TYPES.updateRoom, data: updateData, id }));
+          client.send(JSON.stringify({ type: COMMAND_TYPES.updateRoom, data: updateData, id }));
         });
 
         const newGame = { idGame: games.length, idPlayer: 0 };
         games.push(newGame);
 
-        const roomData = JSON.stringify(newGame);
         wss.clients.forEach((client) => {
-          usersEntries.forEach((user) => {
-            if (client === user[1].socket) {
-              client.send(JSON.stringify({ type: INCOMING_TYPES.createGame, data: roomData, id }));
+          targetRoom?.roomUsers.forEach((user, i) => {
+            const targetUser = usersEntries.find((el) => Number(el[0]) === user.index);
+            if (targetUser![1].socket === client) {
+              client.send(
+                JSON.stringify({
+                  type: COMMAND_TYPES.createGame,
+                  data: JSON.stringify({ idGame: games.length, idPlayer: i }),
+                  id,
+                })
+              );
             }
           });
         });
 
         break;
       }
-      case INCOMING_TYPES.addShips: {
+      case COMMAND_TYPES.addShips: {
         const { ships, indexPlayer } = JSON.parse(incomingData);
         db.ships = ships;
         const gameData = JSON.stringify({ ships: db.ships, currentPlayerIndex: indexPlayer });
-        ws.send(JSON.stringify({ type: INCOMING_TYPES.startGame, data: gameData, id }));
+        ws.send(JSON.stringify({ type: COMMAND_TYPES.startGame, data: gameData, id }));
         break;
       }
-      case INCOMING_TYPES.attack: {
+      case COMMAND_TYPES.attack: {
         const { gameId, x, y, indexPlayer } = JSON.parse(incomingData);
         const attackStatus = getAttackStatus(x, y);
         const attackData = JSON.stringify({ position: { x, y }, currentPlayer: indexPlayer, status: attackStatus });
-        ws.send(JSON.stringify({ type: INCOMING_TYPES.attack, data: attackData, id }));
+        ws.send(JSON.stringify({ type: COMMAND_TYPES.attack, data: attackData, id }));
         break;
       }
     }
