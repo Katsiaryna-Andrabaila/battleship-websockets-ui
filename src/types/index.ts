@@ -48,6 +48,7 @@ export type GameShips = {
   idGame: number;
   0: Ship[];
   1: Ship[];
+  turn: 0 | 1;
 };
 
 export type DB = {

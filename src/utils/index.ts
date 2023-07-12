@@ -7,7 +7,6 @@ export const getAttackStatus = (ships: Ship[], column: number, raw: number) => {
   const empty = 0;
   const filled = 1;
   const matrix = new Array(cells * cells).fill(empty);
-  console.log(ships);
 
   ships.forEach((el) => {
     const { x, y } = el.position;
@@ -16,7 +15,7 @@ export const getAttackStatus = (ships: Ship[], column: number, raw: number) => {
       el.direction === true ? (matrix[(y + i) * cells + x] = filled) : (matrix[y * cells + x + i] = filled);
     }
   });
-  console.log(matrix);
+
   if (matrix[raw * cells + column] === filled) {
     const leftFilled = matrix[raw * cells + column - 1] && matrix[raw * cells + column - 1] === filled;
     const rightFilled = matrix[raw * cells + column + 1] && matrix[raw * cells + column + 1] === filled;
