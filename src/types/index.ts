@@ -34,6 +34,10 @@ export type Ship = {
   type: 'small' | 'medium' | 'large' | 'huge';
 };
 
+export type GameShip = Ship & {
+  cells: number[];
+};
+
 export type Winner = {
   name: string;
   wins: number;
@@ -41,20 +45,21 @@ export type Winner = {
 
 export type Game = {
   idGame: number;
-  idPlayer: number;
-};
-
-export type GameShips = {
-  idGame: number;
-  0: Ship[];
-  1: Ship[];
-  turn: 0 | 1;
+  users: RoomUser[] | undefined;
+  0: { ships: Ship[]; matrix: number[] };
+  1: { ships: Ship[]; matrix: number[] };
+  turn: number;
 };
 
 export type DB = {
   users: Users;
   rooms: Room[];
   games: Game[];
-  gameShips: GameShips[];
   winners: Winner[];
+};
+
+export type AddShips = {
+  gameId: number;
+  ships: Ship[];
+  indexPlayer: 0 | 1;
 };

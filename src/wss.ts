@@ -1,8 +1,8 @@
 import { WebSocketServer } from 'ws';
 import { COMMAND_TYPES, PING_INTERVAL } from './constants';
 import { db } from './db';
-import { getAttackStatus, hasUser, validateUser } from './utils';
-import { ExtendedWebSocket } from './types';
+import { getAttackStatus, getMatrix, hasUser, validateUser } from './utils';
+import { AddShips, ExtendedWebSocket } from './types';
 import { httpServer } from './http_server';
 
 const wss = new WebSocketServer({ port: 3000 }, () => {
@@ -69,7 +69,7 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
 
         rooms.push({
           roomId: rooms.length,
-          roomUsers: [{ name: roomUser![1].name, index: Number(roomUser![0]) }],
+          roomUsers: [{ name: roomUser![1].name, index: +roomUser![0] }],
         });
 
         const availableRooms = rooms.filter((room) => room.roomUsers.length < 2);
@@ -88,7 +88,7 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
 
         targetRoom?.roomUsers.push({
           name: newRoomUser![1].name,
-          index: Number(newRoomUser![0]),
+          index: +newRoomUser![0],
         });
 
         wss.clients.forEach((client) => {
@@ -96,12 +96,18 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
           client.send(JSON.stringify({ type: COMMAND_TYPES.updateRoom, data: updateData, id }));
         });
 
-        const newGame = { idGame: games.length, idPlayer: 0 };
+        const newGame = {
+          idGame: games.length,
+          users: targetRoom?.roomUsers,
+          0: { ships: [], matrix: [] },
+          1: { ships: [], matrix: [] },
+          turn: 0,
+        };
         games.push(newGame);
 
         wss.clients.forEach((client) => {
           targetRoom?.roomUsers.forEach((user, i) => {
-            const targetUser = usersEntries.find((el) => Number(el[0]) === user.index);
+            const targetUser = usersEntries.find((el) => +el[0] === user.index);
             if (targetUser![1].socket === client) {
               client.send(
                 JSON.stringify({
@@ -117,20 +123,17 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         break;
       }
       case COMMAND_TYPES.addShips: {
-        const { gameId, ships, indexPlayer } = JSON.parse(incomingData);
-        const targetGameShips = db.gameShips.find((el) => el.idGame === gameId);
-        if (indexPlayer === 0) {
-          targetGameShips
-            ? (targetGameShips[0] = ships)
-            : db.gameShips.push({ idGame: gameId, 0: ships, 1: [], turn: 0 });
-        } else {
-          targetGameShips
-            ? (targetGameShips[1] = ships)
-            : db.gameShips.push({ idGame: gameId, 0: [], 1: ships, turn: 0 });
-        }
+        const { gameId, ships, indexPlayer }: AddShips = JSON.parse(incomingData);
+        const targetGame = db.games.find((el) => el.idGame === gameId);
+        targetGame![indexPlayer].ships = ships;
 
         const gameData = JSON.stringify({ ships, currentPlayerIndex: indexPlayer });
-        const targetGame = db.gameShips.find((el) => el.idGame === gameId);
+
+        const matrix0 = getMatrix(targetGame![0].ships);
+        const matrix1 = getMatrix(targetGame![1].ships);
+        targetGame![0].matrix = matrix0;
+        targetGame![1].matrix = matrix1;
+
         //if (targetGame?.[0].length && targetGame?.[1].length) {
         ws.send(JSON.stringify({ type: COMMAND_TYPES.startGame, data: gameData, id }));
         ws.send(
@@ -146,12 +149,34 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
       }
       case COMMAND_TYPES.attack: {
         const { gameId, x, y, indexPlayer } = JSON.parse(incomingData);
-        const targetGame = db.gameShips.find((el) => el.idGame === gameId);
-        const ships = db.gameShips.find((el) => el.idGame === gameId);
+        const targetGame = db.games.find((el) => el.idGame === gameId);
 
-        const attackStatus = getAttackStatus(indexPlayer === 0 ? ships![0] : ships![1], x, y);
+        const attackStatus = getAttackStatus(indexPlayer === 0 ? targetGame![1].matrix : targetGame![0].matrix, x, y);
         const attackData = JSON.stringify({ position: { x, y }, currentPlayer: indexPlayer, status: attackStatus });
-        ws.send(JSON.stringify({ type: COMMAND_TYPES.attack, data: attackData, id }));
+
+        wss.clients.forEach((client) => {
+          targetGame?.users?.forEach((user, i) => {
+            const targetUser = usersEntries.find((el) => +el[0] === user.index);
+            if (targetUser![1].socket === client) {
+              client.send(JSON.stringify({ type: COMMAND_TYPES.attack, data: attackData, id }));
+
+              const nextTurn = attackStatus === 'miss' ? targetGame.turn : targetGame.turn === 0 ? 1 : 0;
+
+              client.send(
+                JSON.stringify({
+                  type: COMMAND_TYPES.turn,
+                  data: JSON.stringify({ currentPlayer: nextTurn }),
+                  id: 0,
+                })
+              );
+
+              if (attackStatus === 'killed') {
+                //const neighborCells =
+              }
+            }
+          });
+        });
+
         break;
       }
     }
