@@ -124,7 +124,9 @@ export const getShipNeighborCells = (matrix: number[], column: number, raw: numb
     });
   });
 
-  return Array.from(new Set(shipNeighborCells));
+  const result = Array.from(new Set(shipNeighborCells));
+
+  return result.map((el) => ({ x: el % 10, y: Math.floor(el) / 10 }));
 };
 
 export const validateUser = (name: string, password: string) => {

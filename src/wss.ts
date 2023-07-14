@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { COMMAND_TYPES, PING_INTERVAL } from './constants';
 import { db } from './db';
-import { getAttackStatus, getMatrix, hasUser, validateUser } from './utils';
+import { getAttackStatus, getMatrix, getShipNeighborCells, hasUser, validateUser } from './utils';
 import { AddShips, ExtendedWebSocket } from './types';
 import { httpServer } from './http_server';
 
@@ -171,7 +171,21 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
               );
 
               if (attackStatus === 'killed') {
-                //const neighborCells =
+                const neighborCells = getShipNeighborCells(targetGame![indexPlayer === 0 ? 1 : 0].matrix, x, y);
+                neighborCells.forEach((el) => {
+                  const attackNeighborData = JSON.stringify({
+                    position: { x: el.x, y: el.y },
+                    currentPlayer: indexPlayer,
+                    status: attackStatus,
+                  });
+                  client.send(
+                    JSON.stringify({
+                      type: COMMAND_TYPES.attack,
+                      data: attackNeighborData,
+                      id: 0,
+                    })
+                  );
+                });
               }
             }
           });
