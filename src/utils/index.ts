@@ -15,29 +15,50 @@ const hiddenValues = [single, double, triple, quadruple];
 
 export const getMatrix = (ships: Ship[]) => {
   const matrix = new Array(cells * cells).fill(empty);
+  const positions: Array<Array<number>> = [];
 
-  ships.forEach((el) => {
+  ships.forEach((el, i) => {
     const { x, y } = el.position;
 
     switch (el.length) {
       case 1: {
         matrix[y * cells + x] = single;
+        positions[i].push(y * cells + x);
         break;
       }
       case 2: {
-        el.direction ? (matrix[(y + 1) * cells + x] = double) : (matrix[y * cells + x + 1] = double);
-        matrix[y * cells + x] = single;
+        for (let k = 0; k < 2; k += 1) {
+          if (el.direction) {
+            matrix[(y + k) * cells + x] = double;
+            positions[i].push((y + k) * cells + x);
+          } else {
+            matrix[y * cells + x + k] = double;
+            positions[i].push(y * cells + x + k);
+          }
+        }
         break;
       }
       case 3: {
-        for (let i = 0; i < 3; i += 1) {
-          el.direction ? (matrix[(y + i) * cells + x] = triple) : (matrix[y * cells + x + i] = triple);
+        for (let k = 0; k < 3; k += 1) {
+          if (el.direction) {
+            matrix[(y + k) * cells + x] = triple;
+            positions[i].push((y + k) * cells + x);
+          } else {
+            matrix[y * cells + x + k] = triple;
+            positions[i].push(y * cells + x + k);
+          }
         }
         break;
       }
       case 4: {
-        for (let i = 0; i < 4; i += 1) {
-          el.direction ? (matrix[(y + i) * cells + x] = quadruple) : (matrix[y * cells + x + i] = quadruple);
+        for (let k = 0; k < 4; k += 1) {
+          if (el.direction) {
+            matrix[(y + k) * cells + x] = quadruple;
+            positions[i].push((y + k) * cells + x);
+          } else {
+            matrix[y * cells + x + k] = quadruple;
+            positions[i].push(y * cells + x + k);
+          }
         }
         break;
       }

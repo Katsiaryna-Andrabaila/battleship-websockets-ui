@@ -99,8 +99,8 @@ wss.on('connection', (ws: ExtendedWebSocket, req) => {
         const newGame = {
           idGame: games.length,
           users: targetRoom?.roomUsers,
-          0: { ships: [], matrix: [] },
-          1: { ships: [], matrix: [] },
+          0: { ships: [], matrix: [], position: [] },
+          1: { ships: [], matrix: [], position: [] },
           turn: 0,
         };
         games.push(newGame);

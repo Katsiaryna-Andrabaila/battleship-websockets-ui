@@ -46,8 +46,8 @@ export type Winner = {
 export type Game = {
   idGame: number;
   users: RoomUser[] | undefined;
-  0: { ships: Ship[]; matrix: number[] };
-  1: { ships: Ship[]; matrix: number[] };
+  0: { ships: Ship[]; matrix: number[]; position: Array<Array<number>> };
+  1: { ships: Ship[]; matrix: number[]; position: Array<Array<number>> };
   turn: number;
 };
 
