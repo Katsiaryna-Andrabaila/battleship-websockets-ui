@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "WebSocket remote control task",
   "main": "index.ts",
+  "type": "module",
   "scripts": {
-    "start": "node src/index.ts",
-    "start:dev": "nodemon src/index.ts",
+    "start": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
+    "start:dev": "nodemon --exec npm run start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Katsiaryna Andrabaila",
